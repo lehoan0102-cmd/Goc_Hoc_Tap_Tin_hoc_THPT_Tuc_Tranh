@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thử Thách 3 Cấp Độ - Biến & Lệnh Gán Python</title>
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Thư viện pháo giấy cho hiệu ứng chiến thắng -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Outfit', system-ui, sans-serif; 
+            margin: 0;
+            overflow: hidden; /* Prevent body scroll, handle inside app */
+        }
+
+        /* Animated Background Gradient */
+        .bg-animated {
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #0f172a, #172554, #312e81);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel { 
+            background: rgba(30, 41, 59, 0.6); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        /* Animations */
+        @keyframes slideInRight { 
+            from { opacity: 0; transform: translateX(30px); } 
+            to { opacity: 1; transform: translateX(0); } 
+        }
+        .animate-slide-in { animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-pop-in { animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+
+        /* Interactive Buttons */
+        .btn-3d {
+            transition: all 0.15s ease;
+            position: relative;
+            top: 0;
+        }
+        .btn-3d:active:not(:disabled) {
+            top: 2px;
+            box-shadow: none !important;
+            transform: translateY(2px);
+        }
+
+        /* Option button states */
+        .opt-btn { transition: all 0.25s ease; }
+        .opt-btn:hover:not(:disabled) { transform: translateX(5px); border-color: rgba(99, 102, 241, 0.5); background: rgba(30, 41, 59, 0.9); }
+        
+        @keyframes pulse-correct { 
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); } 
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
+        }
+        .correct-ans { animation: pulse-correct 1.5s infinite; border-color: #10b981 !important; background: rgba(16, 185, 129, 0.15) !important; color: #fff; }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+        .wrong-ans { animation: shake 0.4s; border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.15) !important; color: #fff; opacity: 0.8; }
+        
+        .disabled-opt { opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; }
+
+        /* Level Theme Colors */
+        .theme-1 { --primary: #06b6d4; --primary-dark: #0891b2; --gradient: linear-gradient(135deg, #06b6d4, #3b82f6); } /* Cyan/Blue */
+        .theme-2 { --primary: #f59e0b; --primary-dark: #d97706; --gradient: linear-gradient(135deg, #f59e0b, #ef4444); } /* Amber/Red */
+        .theme-3 { --primary: #8b5cf6; --primary-dark: #7c3aed; --gradient: linear-gradient(135deg, #8b5cf6, #ec4899); } /* Violet/Pink */
+
+        .level-badge { background: var(--gradient); }
+        .level-text { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="bg-animated text-slate-100">
+    <div class="fixed top-3 left-3 md:top-5 md:left-5 z-[100] bg-slate-900/60 backdrop-blur-md px-4 py-2.5 rounded-full border border-slate-600/50 text-slate-200 text-xs md:text-sm font-medium shadow-xl flex items-center pointer-events-none animate-slide-in">
+        <i class="fas fa-chalkboard-teacher text-cyan-400 mr-2 text-base"></i>
+        GV - Nguyễn Lê Hoàn - THPT Tức Tranh
+    </div>
+
+    <div id="root" class="h-screen w-screen overflow-y-auto overflow-x-hidden"></div>
+
+    <script type="text/babel">
+        const QUESTION_BANK = [
+            // CẤP ĐỘ 1: NHẬN BIẾT (10 câu)
+            { id: 101, level: 1, type: "Khái niệm biến", q: "Trong Python, biến được hiểu là gì?", options: ["Tên của một vùng nhớ dùng để lưu trữ giá trị", "Một câu lệnh dừng chương trình", "Một kiểu dữ liệu dạng số", "Một hàm có sẵn trong Python"], ans: 0, hint: "Xem lại khái niệm cơ bản: Biến giống như một chiếc hộp có tên, dùng để đựng dữ liệu." },
+            { id: 102, level: 1, type: "Cú pháp lệnh gán", q: "Cú pháp tổng quát của lệnh gán trong Python là gì?", options: ["<biến> = <giá trị/biểu thức>", "<biến> == <giá trị>", "<giá trị> = <biến>", "set <biến> = <giá trị>"], ans: 0, hint: "Phép gán sử dụng một dấu bằng (=), đưa giá trị từ phải sang trái." },
+            { id: 103, level: 1, type: "Quy tắc đặt tên", q: "Tên biến nào sau đây là KHÔNG hợp lệ trong Python?", options: ["12abc", "_name", "My_country", "xyzABC"], ans: 0, hint: "Quy tắc bắt buộc: Tên biến không được bắt đầu bằng chữ số." },
+            { id: 104, level: 1, type: "Kiểu dữ liệu", q: "Biến trong Python được xác định kiểu dữ liệu vào thời điểm nào?", options: ["Tại thời điểm gán giá trị", "Phải khai báo trước khi viết code", "Lúc biên dịch toàn bộ chương trình", "Không bao giờ xác định"], ans: 0, hint: "Python là ngôn ngữ kiểu động, nó tự biết kiểu dữ liệu ngay khi bạn truyền giá trị cho biến." },
+            { id: 105, level: 1, type: "Toán tử", q: "Phép toán lấy phần dư trong Python sử dụng kí hiệu nào?", options: ["%", "//", "/", "**"], ans: 0, hint: "Kí hiệu này thường gắn liền với tính phần trăm trong toán học." },
+            { id: 106, level: 1, type: "Toán tử", q: "Phép toán lấy thương nguyên (chia lấy nguyên) sử dụng kí hiệu nào?", options: ["//", "/", "%", "**"], ans: 0, hint: "Kí hiệu chia kép, sẽ bỏ đi phần thập phân của kết quả." },
+            { id: 107, level: 1, type: "Toán tử", q: "Kí hiệu của phép tính luỹ thừa trong Python là gì?", options: ["**", "^", "pow", "exp"], ans: 0, hint: "Gồm hai dấu sao liên tiếp." },
+            { id: 108, level: 1, type: "Từ khóa", q: "Từ khoá trong ngôn ngữ lập trình là gì?", options: ["Các từ tiếng Anh đặc biệt có mục đích riêng", "Tên do người lập trình tự đặt", "Là các biến có sẵn", "Là các hằng số toán học"], ans: 0, hint: "Đó là những từ đã được Python 'đặt chỗ' trước (VD: if, for, while) và bạn không được dùng làm tên biến." },
+            { id: 109, level: 1, type: "Toán tử xâu", q: "Phép toán nào dùng để nối hai xâu kí tự trong Python?", options: ["Phép +", "Phép *", "Phép &", "Phép //"], ans: 0, hint: "Sử dụng dấu cộng để nối các đoạn chữ (string) lại với nhau." },
+            { id: 110, level: 1, type: "Cú pháp", q: "Đâu là cú pháp đúng để gán đồng thời nhiều biến?", options: ["x, y = 10, 5", "x = 10, y = 5", "x & y = 10 & 5", "x = y = 10, 5"], ans: 0, hint: "Sử dụng dấu phẩy để ngăn cách các biến bên trái và các giá trị bên phải tương ứng." },
+
+            // CẤP ĐỘ 2: THÔNG HIỂU (10 câu)
+            { id: 201, level: 2, type: "Tính toán", q: "Kết quả của phép tính `10 // 3` là bao nhiêu?", options: ["3", "1", "3.3333", "0"], ans: 0, hint: "10 chia 3 được 3 dư 1. Phép // chỉ lấy phần thương nguyên." },
+            { id: 202, level: 2, type: "Tính toán", q: "Kết quả của phép tính `10 % 3` là bao nhiêu?", options: ["1", "3", "3.3333", "0"], ans: 0, hint: "10 chia 3 được 3 dư 1. Phép % chỉ lấy phần dư." },
+            { id: 203, level: 2, type: "Thao tác xâu", q: "Kết quả của lệnh `print('123' * 2)` là gì?", options: ["'123123'", "246", "Lỗi", "'123 123'"], ans: 0, hint: "Phép * với xâu kí tự sẽ lặp lại xâu đó n lần, không phải phép nhân toán học." },
+            { id: 204, level: 2, type: "Gán giá trị", q: "Sau hai lệnh: `x = 5` và `y = '10'`, kết quả của `x + y` là gì?", options: ["Báo lỗi", "15", "'510'", "510"], ans: 0, hint: "Python không tự động chuyển kiểu trong phép cộng. Không thể cộng số nguyên (int) với xâu (string)." },
+            { id: 205, level: 2, type: "Gán đa biến", q: "Sau lệnh `x = y = 1`, giá trị của x và y là?", options: ["Cả x và y đều bằng 1", "x bằng 1, y không xác định", "Báo lỗi", "x bằng y, y bằng 0"], ans: 0, hint: "Đây là phép gán liên hoàn, giá trị 1 được gán cho y, rồi gán tiếp cho x." },
+            { id: 206, level: 2, type: "Từ khóa", q: "Tại sao lệnh `if = 12` lại báo lỗi SyntaxError?", options: ["Vì 'if' là từ khoá của Python", "Vì thiếu dấu hai chấm", "Vì 12 không phải xâu", "Vì biến if phải viết hoa"], ans: 0, hint: "Từ khóa (keyword) là những từ hệ thống đã giữ lại, không được dùng làm tên biến." },
+            { id: 207, level: 2, type: "Thứ tự ưu tiên", q: "Biểu thức `4 ** 2 ** 3` được thực hiện theo thứ tự nào?", options: ["Từ phải sang trái: 4 ** (2 ** 3)", "Từ trái sang phải: (4 ** 2) ** 3", "Đồng thời", "Báo lỗi"], ans: 0, hint: "Phép luỹ thừa (**) là phép toán duy nhất ưu tiên thực hiện từ phải sang trái." },
+            { id: 208, level: 2, type: "Kiểu dữ liệu", q: "Trong biểu thức `c = 3 / 2`, biến c sẽ mang kiểu dữ liệu gì?", options: ["Số thực (float)", "Số nguyên (int)", "Xâu (string)", "Boolean"], ans: 0, hint: "Khác với các ngôn ngữ cũ, phép chia `/` trong Python 3 luôn trả về số thực (float)." },
+            { id: 209, level: 2, type: "Thứ tự ưu tiên", q: "Biểu thức `2 + 3 * 2` cho kết quả bao nhiêu?", options: ["8", "10", "12", "7"], ans: 0, hint: "Quy tắc cơ bản: Nhân chia trước, cộng trừ sau." },
+            { id: 210, level: 2, type: "Toán tử xâu", q: "Kết quả của `'Ha' + 'Noi'` là gì?", options: ["'HaNoi'", "'Ha Noi'", "Báo lỗi", "0"], ans: 0, hint: "Phép cộng sẽ nối liền hai xâu sát vào nhau, không tự động sinh khoảng trắng." },
+
+            // CẤP ĐỘ 3: VẬN DỤNG (10 câu)
+            { id: 301, level: 3, type: "Xử lý biểu thức", q: "Cho đoạn code:\n`x = 10`\n`y = x**2 - 1`\nGiá trị của y là bao nhiêu?", options: ["99", "19", "81", "100"], ans: 0, hint: "Thay x = 10 vào: 10 bình phương (100) trừ đi 1." },
+            { id: 302, level: 3, type: "Phân tích Logic", q: "Cho đoạn code:\n`a, b = 2, 3`\n`a, b = a + b, a - b`\nGiá trị mới của a và b là?", options: ["a = 5, b = -1", "a = 5, b = 1", "a = 5, b = 2", "Báo lỗi"], ans: 0, hint: "Vế phải được tính xong hoàn toàn: (2+3=5) và (2-3=-1), sau đó mới đồng thời gán vào a và b." },
+            { id: 303, level: 3, type: "Tính toán phức hợp", q: "Kết quả của biểu thức `3/2 + 4 * 2**4 - 5 // 2**2` là?", options: ["64.5", "65.5", "60", "Báo lỗi"], ans: 0, hint: "Luỹ thừa trước: 2**4=16, 2**2=4. Thành: 3/2 + 4*16 - 5//4. \nTiếp tục: 1.5 + 64 - 1 = 64.5" },
+            { id: 304, level: 3, type: "Tình huống thực tế", q: "Biết 1 ngày = 86400 giây. Để đổi 684500 giây sang số ngày (nguyên), ta dùng biểu thức nào?", options: ["684500 // 86400", "684500 / 86400", "684500 % 86400", "684500 ** 86400"], ans: 0, hint: "Số ngày nguyên tức là phần thương nguyên của phép chia tổng giây cho số giây trong 1 ngày." },
+            { id: 305, level: 3, type: "Phân tích Logic", q: "Đoạn code `x, y = 10, 7` và sau đó `x, y = y, x` có tác dụng gì?", options: ["Hoán đổi giá trị của x và y", "Gán x = 7, y = 7", "Báo lỗi", "Gán x = 10, y = 10"], ans: 0, hint: "Đây là 'đặc sản' của Python giúp hoán đổi giá trị 2 biến mà không cần biến tạm trung gian." },
+            { id: 306, level: 3, type: "Phát hiện lỗi", q: "Tại sao đoạn code sau báo lỗi?\n`x = 1`\n`123a = x + 1`", options: ["Tên biến `123a` bắt đầu bằng chữ số", "Không thể cộng số với biến", "Biến x chưa được gán đúng", "Phải có khoảng trắng sau dấu bằng"], ans: 0, hint: "Hãy nhìn vào quy tắc đặt tên biến ở vế trái của câu lệnh thứ hai." },
+            { id: 307, level: 3, type: "Ứng dụng công thức", q: "Giả sử `R = 5, pi = 3.14`. Câu lệnh tính diện tích hình tròn nào viết ĐÚNG cú pháp Python?", options: ["S = pi * R ** 2", "S = pi * R * 2", "S = pi * R ^ 2", "S = pi + R ** 2"], ans: 0, hint: "Công thức toán: S = π.R². Trong Python luỹ thừa dùng kí hiệu gì?" },
+            { id: 308, level: 3, type: "Xử lý xâu", q: "Cho lệnh: `print('đồ ' * 2 + 'rê ')`.\nKết quả in ra là?", options: ["đồ đồ rê ", "đồ rê đồ rê ", "đồrêđồ", "Lỗi"], ans: 0, hint: "Nhân xâu 'đồ ' 2 lần trước (ra 'đồ đồ '), sau đó cộng nối với xâu 'rê '." },
+            { id: 309, level: 3, type: "Tính toán phức hợp", q: "Tính biểu thức: `(12 - 10 // 2) ** 2 - 1`", options: ["48", "3", "143", "-1"], ans: 0, hint: "Tính trong ngoặc trước: 10 // 2 = 5; 12 - 5 = 7. \nSau đó: 7**2 = 49. Cuối cùng 49 - 1 = 48." },
+            { id: 310, level: 3, type: "Vận dụng kết hợp", q: "Kết quả của `" + "10" + " + " + "0"*5 + "` là?", options: ["1000000", "100000", "Báo lỗi", "10"], ans: 0, hint: "'0'*5 tạo ra xâu '00000'. Nối '10' với '00000' ta được '1000000'." }
+        ];
+
+        const AudioSys = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } 
+                    catch(e) { console.warn("Audio Context not supported"); }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            play(type) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                const now = this.ctx.currentTime;
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1); // C6
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'win') {
+                    // Chords for winning
+                    [440, 554.37, 659.25].forEach((freq, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const g = this.ctx.createGain();
+                        osc.connect(g);
+                        g.connect(this.ctx.destination);
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i*0.1);
+                        g.gain.setValueAtTime(0, now + i*0.1);
+                        g.gain.linearRampToValueAtTime(0.2, now + i*0.1 + 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                        osc.start(now + i*0.1);
+                        osc.stop(now + 1.5);
+                    });
+                }
+            }
+        };
+
+        const QUESTIONS_PER_LEVEL = 5;
+
+        function shuffleArray(arr) {
+            let array = [...arr];
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateLevelQuestions(level) {
+            const levelBank = QUESTION_BANK.filter(q => q.level === level);
+            const shuffledBank = shuffleArray(levelBank);
+            const selected = shuffledBank.slice(0, QUESTIONS_PER_LEVEL);
+            
+            return selected.map(q => {
+                const correctText = q.options[q.ans];
+                const shuffledOptions = shuffleArray([...q.options]);
+                const newAnsIndex = shuffledOptions.indexOf(correctText);
+                return { ...q, options: shuffledOptions, ans: newAnsIndex };
+            });
+        }
+
+        function fireConfetti() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#06b6d4', '#f59e0b', '#8b5cf6']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#06b6d4', '#f59e0b', '#8b5cf6']
+                });
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+            }());
+        }
+
+        const IntroScreen = ({ onStart }) => (
+            <div className="flex flex-col items-center justify-center min-h-screen animate-pop-in p-6 text-center relative z-10">
+                <div className="animate-float mb-8">
+                    <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-500/50 transform rotate-12 mx-auto">
+                        <i className="fa-brands fa-python text-6xl text-white -rotate-12"></i>
+                    </div>
+                </div>
+                
+                <h1 className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-4 tracking-tight drop-shadow-lg">
+                    THỬ THÁCH 3 CẤP ĐỘ
+                </h1>
+                <p className="text-2xl text-blue-200 mb-10 font-light tracking-wide bg-slate-900/40 py-2 px-6 rounded-full backdrop-blur-md inline-block">
+                    Bài 17: Biến và Lệnh Gán (Python)
+                </p>
+                
+                <div className="glass-panel rounded-3xl p-8 mb-10 max-w-xl text-left shadow-2xl transform hover:scale-[1.02] transition-transform">
+                    <h3 className="font-bold text-xl text-cyan-300 mb-4 flex items-center">
+                        <i className="fas fa-gamepad mr-3 text-2xl"></i> Cơ chế trò chơi
+                    </h3>
+                    <ul className="space-y-4 text-slate-200 text-base md:text-lg">
+                        <li className="flex items-start">
+                            <span className="bg-cyan-500/20 text-cyan-400 rounded-full w-8 h-8 flex items-center justify-center shrink-0 mr-3 mt-0.5"><i className="fas fa-layer-group"></i></span>
+                            <span>Vượt qua lần lượt 3 cấp độ: <strong>Nhận biết &rarr; Thông hiểu &rarr; Vận dụng</strong>.</span>
+                        </li>
+                        <li className="flex items-start">
+                            <span className="bg-amber-500/20 text-amber-400 rounded-full w-8 h-8 flex items-center justify-center shrink-0 mr-3 mt-0.5"><i className="fas fa-dice"></i></span>
+                            <span>Mỗi cấp độ gồm <strong>{QUESTIONS_PER_LEVEL} câu hỏi</strong> được rút ngẫu nhiên từ ngân hàng dữ liệu lớn.</span>
+                        </li>
+                        <li className="flex items-start">
+                            <span className="bg-purple-500/20 text-purple-400 rounded-full w-8 h-8 flex items-center justify-center shrink-0 mr-3 mt-0.5"><i className="fas fa-rotate-right"></i></span>
+                            <span>Có thể làm lại nhiều lần với <strong>bộ câu hỏi khác nhau</strong> để ôn tập.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <button onClick={onStart} className="btn-3d group bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-[0_10px_0_0_#1d4ed8,0_15px_20px_rgba(0,0,0,0.4)]">
+                    BẮT ĐẦU CHIẾN DỊCH <i className="fas fa-rocket ml-2 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </div>
+        );
+
+        const LevelSummary = ({ level, score, onNext, onRetry, isFinal }) => {
+            const maxScore = QUESTIONS_PER_LEVEL * 10;
+            const percentage = (score / maxScore) * 100;
+            
+            let message = "Cố gắng lên!";
+            let icon = "fa-star-half-stroke text-amber-400";
+            if (percentage >= 80) { message = "Xuất sắc!"; icon = "fa-crown text-yellow-400"; }
+            else if (percentage >= 50) { message = "Khá tốt!"; icon = "fa-thumbs-up text-blue-400"; }
+
+            React.useEffect(() => {
+                if (percentage >= 80) fireConfetti();
+                AudioSys.play(percentage >= 50 ? 'win' : 'correct');
+            }, []);
+
+            const themeClass = `theme-${level}`;
+
+            return (
+                <div className={`flex flex-col items-center justify-center min-h-screen p-6 animate-pop-in ${themeClass} z-10 relative`}>
+                    <div className="glass-panel p-8 md:p-12 rounded-3xl max-w-lg w-full text-center border-t-8" style={{ borderTopColor: 'var(--primary)'}}>
+                        <div className="mb-4">
+                            <span className="bg-slate-800 text-slate-300 py-1 px-4 rounded-full text-sm font-semibold tracking-wider uppercase">
+                                Hoàn thành Cấp độ {level}
+                            </span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-black mb-2 level-text">
+                            {level === 1 ? 'NHẬN BIẾT' : level === 2 ? 'THÔNG HIỂU' : 'VẬN DỤNG'}
+                        </h2>
+                        
+                        <div className="my-10 relative">
+                            <div className="text-8xl mb-2 drop-shadow-xl"><i className={`fas ${icon} animate-float`}></i></div>
+                            <div className="text-6xl font-black text-white drop-shadow-md">
+                                {score} <span className="text-3xl text-slate-400 font-medium">/ {maxScore}</span>
+                            </div>
+                            <p className="text-xl text-slate-300 mt-2 font-medium">{message}</p>
+                        </div>
+
+                        <div className="flex flex-col gap-4 mt-8">
+                            <button onClick={onNext} className="btn-3d w-full level-badge text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-[0_8px_0_0_var(--primary-dark)]">
+                                {isFinal ? 'XEM BÁO CÁO TỔNG THỂ' : 'ĐI TỚI CẤP ĐỘ TIẾP THEO'} <i className={`fas ${isFinal ? 'fa-chart-pie' : 'fa-arrow-right'} ml-2`}></i>
+                            </button>
+                            <button onClick={onRetry} className="btn-3d w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-4 px-8 rounded-2xl text-lg shadow-[0_8px_0_0_#475569]">
+                                <i className="fas fa-rotate-right mr-2"></i> LÀM LẠI MÀN NÀY (CÂU HỎI MỚI)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ResultsScreen = ({ stats, onRetryGame }) => {
+            const totalScore = stats.scores[1] + stats.scores[2] + stats.scores[3];
+            const maxScore = QUESTIONS_PER_LEVEL * 3 * 10;
+            const accuracy = Math.round((totalScore / maxScore) * 100) || 0;
+
+            React.useEffect(() => {
+                if (accuracy >= 50) {
+                    AudioSys.play('win');
+                    fireConfetti();
+                }
+            }, []);
+
+            return (
+                <div className="min-h-screen p-4 sm:p-8 animate-pop-in overflow-y-auto relative z-10 flex flex-col justify-center">
+                    <div className="max-w-4xl mx-auto w-full glass-panel rounded-3xl p-6 md:p-10 shadow-2xl border-t-8 border-t-emerald-500">
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 uppercase tracking-wider">Báo Cáo Tổng Hợp</h2>
+                            <div className="inline-block relative">
+                                <svg className="w-48 h-48 transform -rotate-90">
+                                    <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.1)" strokeWidth="12" fill="none" />
+                                    <circle cx="96" cy="96" r="88" stroke={accuracy >= 80 ? '#10b981' : accuracy >= 50 ? '#3b82f6' : '#ef4444'} strokeWidth="12" fill="none" strokeDasharray="553" strokeDashoffset={553 - (553 * accuracy) / 100} className="transition-all duration-1000 ease-out" strokeLinecap="round" />
+                                </svg>
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                                    <div className="text-4xl font-black text-white">{accuracy}%</div>
+                                    <div className="text-sm text-slate-400">Chính xác</div>
+                                </div>
+                            </div>
+                            <div className="mt-6 text-2xl font-bold text-emerald-400">
+                                Tổng điểm: {totalScore} / {maxScore}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                            {[1, 2, 3].map(lvl => (
+                                <div key={lvl} className={`bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl text-center theme-${lvl}`}>
+                                    <div className="w-10 h-10 rounded-full mb-3 mx-auto flex items-center justify-center level-badge text-white font-bold">{lvl}</div>
+                                    <h4 className="text-sm text-slate-400 uppercase tracking-wider mb-2 font-semibold">
+                                        {lvl === 1 ? 'Nhận biết' : lvl === 2 ? 'Thông hiểu' : 'Vận dụng'}
+                                    </h4>
+                                    <div className="text-2xl font-black text-white">{stats.scores[lvl]}đ</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                            <div className="bg-emerald-900/20 border border-emerald-500/30 p-6 rounded-2xl">
+                                <h3 className="text-xl font-bold text-emerald-400 mb-4 flex items-center">
+                                    <i className="fas fa-medal mr-3 text-2xl"></i> Điểm sáng kiến thức
+                                </h3>
+                                <ul className="space-y-3">
+                                    {stats.mastered.length > 0 
+                                        ? stats.mastered.map((item, i) => <li key={i} className="flex items-start text-emerald-100"><i className="fas fa-check text-emerald-500 mt-1 mr-2"></i> {item}</li>)
+                                        : <li className="text-slate-400 italic">Cần cố gắng nhiều hơn để ghi dấu ấn.</li>}
+                                </ul>
+                            </div>
+                            <div className="bg-rose-900/20 border border-rose-500/30 p-6 rounded-2xl">
+                                <h3 className="text-xl font-bold text-rose-400 mb-4 flex items-center">
+                                    <i className="fas fa-book-open mr-3 text-2xl"></i> Vùng cần ôn tập
+                                </h3>
+                                <ul className="space-y-3">
+                                    {stats.needsReview.length > 0 
+                                        ? stats.needsReview.map((item, i) => <li key={i} className="flex items-start text-rose-100"><i className="fas fa-arrow-right text-rose-500 mt-1 mr-2"></i> Ôn lại: <strong>{item}</strong></li>)
+                                        : <li className="text-slate-400 italic">Tuyệt vời! Bạn không có lỗ hổng kiến thức lớn nào.</li>}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="text-center">
+                            <button onClick={onRetryGame} className="btn-3d inline-flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-4 px-10 rounded-2xl text-xl shadow-[0_8px_0_0_#4338ca]">
+                                <i className="fas fa-rotate-right mr-3"></i> CHƠI LẠI TỪ ĐẦU VỚI BỘ CÂU HỎI MỚI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [gameState, setGameState] = React.useState('intro'); // intro, playing, summary, results
+            const [currentLevel, setCurrentLevel] = React.useState(1);
+            const [unlockedLevels, setUnlockedLevels] = React.useState([1]);
+            
+            const [questions, setQuestions] = React.useState([]);
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            
+            const [scores, setScores] = React.useState({ 1: 0, 2: 0, 3: 0 });
+            // Store answer history for stats
+            const [globalAnswers, setGlobalAnswers] = React.useState({}); 
+            // Store answers for current level view
+            const [levelAnswers, setLevelAnswers] = React.useState({});
+
+            const [soundEnabled, setSoundEnabled] = React.useState(true);
+            const [showHint, setShowHint] = React.useState(false);
+
+            const startGame = () => {
+                AudioSys.init();
+                setScores({ 1: 0, 2: 0, 3: 0 });
+                setGlobalAnswers({});
+                setUnlockedLevels([1]);
+                startLevel(1);
+            };
+
+            const startLevel = (level) => {
+                const qs = generateLevelQuestions(level);
+                setQuestions(qs);
+                setCurrentIndex(0);
+                setCurrentLevel(level);
+                setLevelAnswers({});
+                setShowHint(false);
+                setGameState('playing');
+                // Reset score for this level when starting/retrying
+                setScores(prev => ({ ...prev, [level]: 0 }));
+            };
+
+            const retryCurrentLevel = () => {
+                startLevel(currentLevel);
+            };
+
+            const toggleSound = () => {
+                if(!soundEnabled) AudioSys.init();
+                setSoundEnabled(!soundEnabled);
+            };
+
+            const handleOptionClick = (optionIndex) => {
+                const q = questions[currentIndex];
+                if (levelAnswers[q.id]) return; // Already answered
+
+                const isCorrect = optionIndex === q.ans;
+                
+                if (soundEnabled) {
+                    AudioSys.play(isCorrect ? 'correct' : 'wrong');
+                }
+
+                const answerData = { selected: optionIndex, isCorrect, type: q.type };
+
+                setLevelAnswers(prev => ({ ...prev, [q.id]: answerData }));
+                setGlobalAnswers(prev => ({ ...prev, [q.id]: answerData }));
+
+                if (isCorrect) {
+                    setScores(prev => ({
+                        ...prev,
+                        [currentLevel]: prev[currentLevel] + 10
+                    }));
+                }
+            };
+
+            const nextQuestion = () => {
+                if (currentIndex < questions.length - 1) {
+                    setCurrentIndex(currentIndex + 1);
+                    setShowHint(false);
+                } else {
+                    // Level complete
+                    setGameState('summary');
+                }
+            };
+
+            const handleNextLevel = () => {
+                if (currentLevel < 3) {
+                    const nextLv = currentLevel + 1;
+                    if (!unlockedLevels.includes(nextLv)) {
+                        setUnlockedLevels(prev => [...prev, nextLv]);
+                    }
+                    startLevel(nextLv);
+                } else {
+                    setGameState('results');
+                }
+            };
+
+            const analyzeResults = () => {
+                let rightTypes = {};
+                let wrongTypes = {};
+                
+                Object.values(globalAnswers).forEach(ans => {
+                    if (ans.isCorrect) rightTypes[ans.type] = (rightTypes[ans.type] || 0) + 1;
+                    else wrongTypes[ans.type] = (wrongTypes[ans.type] || 0) + 1;
+                });
+
+                const mastered = Object.keys(rightTypes).filter(type => !wrongTypes[type] || rightTypes[type] > wrongTypes[type]);
+                const needsReview = Object.keys(wrongTypes).filter(type => !rightTypes[type] || wrongTypes[type] >= rightTypes[type]);
+
+                return { scores, mastered, needsReview };
+            };
+
+            if (gameState === 'intro') return <IntroScreen onStart={startGame} />;
+            if (gameState === 'summary') return (
+                <LevelSummary 
+                    level={currentLevel} 
+                    score={scores[currentLevel]} 
+                    onNext={handleNextLevel} 
+                    onRetry={retryCurrentLevel}
+                    isFinal={currentLevel === 3}
+                />
+            );
+            if (gameState === 'results') return <ResultsScreen stats={analyzeResults()} onRetryGame={startGame} />;
+
+            const currentQ = questions[currentIndex];
+            const hasAnswered = !!levelAnswers[currentQ?.id];
+            const answeredData = levelAnswers[currentQ?.id];
+            const themeClass = `theme-${currentLevel}`;
+
+            return (
+                <div className={`flex flex-col h-screen max-w-5xl mx-auto p-4 md:p-6 ${themeClass} z-10 relative`}>
+                    
+                    {/* Header & Level Tabs */}
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div className="flex space-x-2 w-full md:w-auto bg-slate-800/50 p-1.5 rounded-2xl border border-slate-700/50">
+                            {[1, 2, 3].map(lv => (
+                                <div key={lv} 
+                                    className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold text-sm text-center transition-all duration-300 ${
+                                        currentLevel === lv ? 'level-badge text-white shadow-lg transform scale-105' :
+                                        unlockedLevels.includes(lv) ? 'bg-transparent text-slate-300' :
+                                        'bg-transparent text-slate-600 opacity-50'
+                                    }`}
+                                >
+                                    {lv === 1 ? 'Nhận biết' : lv === 2 ? 'Thông hiểu' : 'Vận dụng'}
+                                    {!unlockedLevels.includes(lv) && <i className="fas fa-lock ml-2 text-xs"></i>}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 ml-auto">
+                            <div className="flex items-center bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
+                                <i className="fas fa-star text-yellow-400 mr-2"></i>
+                                <span className="font-bold text-white tracking-wider">{scores[currentLevel]}</span>
+                            </div>
+                            <button onClick={toggleSound} className="text-slate-300 hover:text-white transition-colors w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center">
+                                <i className={`fas ${soundEnabled ? 'fa-volume-up' : 'fa-volume-mute'}`}></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main Question Card Area */}
+                    <div className="flex-1 flex flex-col relative">
+                        <div className="glass-panel p-6 md:p-10 rounded-[2rem] flex-1 flex flex-col relative overflow-hidden shadow-2xl border-t-8 border-t-[var(--primary)]">
+                            
+                            {/* Segmented Progress Bar */}
+                            <div className="flex space-x-2 mb-8">
+                                {questions.map((_, idx) => (
+                                    <div key={idx} className="flex-1 h-2 rounded-full bg-slate-700 overflow-hidden relative">
+                                        <div className={`absolute inset-0 transition-all duration-500 ease-out ${
+                                            idx < currentIndex ? 'bg-emerald-500' : 
+                                            idx === currentIndex ? 'level-badge' : 'bg-transparent'
+                                        }`}></div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="flex justify-between items-end mb-6 text-sm font-semibold text-[var(--primary)] uppercase tracking-widest">
+                                <span>Câu hỏi {currentIndex + 1} / {QUESTIONS_PER_LEVEL}</span>
+                                <span className="bg-[var(--primary-dark)]/20 px-3 py-1 rounded-full"><i className="fas fa-tag mr-2"></i>{currentQ?.type}</span>
+                            </div>
+
+                            {/* Question Container with Animation Key */}
+                            <div key={currentQ?.id} className="animate-slide-in flex-1 flex flex-col">
+                                <h2 className="text-2xl md:text-3xl font-bold mb-8 text-white leading-relaxed tracking-wide">
+                                    {currentQ?.q.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)}
+                                </h2>
+
+                                <div className="grid grid-cols-1 gap-4 mb-6">
+                                    {currentQ?.options.map((opt, idx) => {
+                                        let btnClass = "opt-btn w-full text-left p-5 rounded-2xl border-2 font-medium text-lg flex items-center relative overflow-hidden ";
+                                        
+                                        if (hasAnswered) {
+                                            if (idx === currentQ.ans) {
+                                                btnClass += "correct-ans z-10";
+                                            } else if (idx === answeredData.selected) {
+                                                btnClass += "wrong-ans z-10";
+                                            } else {
+                                                btnClass += "border-slate-700 bg-slate-800/40 text-slate-400 disabled-opt";
+                                            }
+                                        } else {
+                                            btnClass += "border-slate-700 bg-slate-800/80 text-slate-200 cursor-pointer shadow-lg";
+                                        }
+
+                                        return (
+                                            <button 
+                                                key={idx} 
+                                                disabled={hasAnswered}
+                                                onClick={() => handleOptionClick(idx)}
+                                                className={btnClass}
+                                            >
+                                                <span className={`inline-flex items-center justify-center w-10 h-10 rounded-xl mr-4 font-bold text-lg shrink-0 transition-colors ${hasAnswered && idx === currentQ.ans ? 'bg-white text-emerald-600' : hasAnswered && idx === answeredData.selected ? 'bg-white text-rose-600' : 'bg-slate-900/60 text-[var(--primary)]'}`}>
+                                                    {['A', 'B', 'C', 'D'][idx]}
+                                                </span>
+                                                <span className="flex-1 pr-8">{opt}</span>
+                                                
+                                                {hasAnswered && idx === currentQ.ans && (
+                                                    <i className="fas fa-check-circle absolute right-5 top-1/2 transform -translate-y-1/2 text-3xl text-emerald-400 drop-shadow"></i>
+                                                )}
+                                                {hasAnswered && idx === answeredData.selected && idx !== currentQ.ans && (
+                                                    <i className="fas fa-times-circle absolute right-5 top-1/2 transform -translate-y-1/2 text-3xl text-rose-400 drop-shadow"></i>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Hint System */}
+                                {showHint && !hasAnswered && (
+                                    <div className="p-5 mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-200 text-base animate-pop-in flex items-start shadow-inner">
+                                        <i className="fas fa-lightbulb text-2xl text-amber-400 mr-4 mt-1 animate-pulse"></i> 
+                                        <p className="leading-relaxed">{currentQ?.hint}</p>
+                                    </div>
+                                )}
+
+                                {/* Feedback after answer */}
+                                {hasAnswered && (
+                                    <div className={`p-5 mb-4 rounded-2xl text-base animate-pop-in border flex items-start shadow-lg ${answeredData.isCorrect ? 'bg-emerald-900/30 border-emerald-500/50 text-emerald-100' : 'bg-rose-900/30 border-rose-500/50 text-rose-100'}`}>
+                                        <div className="mr-4 mt-1 text-2xl">
+                                            {answeredData.isCorrect ? '🎉' : '💡'}
+                                        </div>
+                                        <div>
+                                            <strong className="block mb-1 text-lg">
+                                                {answeredData.isCorrect ? 'Tuyệt vời! Giải thích thêm:' : 'Chưa chính xác. Cùng xem lại nhé:'}
+                                            </strong>
+                                            <p className="leading-relaxed opacity-90">{currentQ?.hint}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {/* Footer Controls */}
+                        <div className="mt-6 flex justify-between items-center px-2">
+                            <div>
+                                {!hasAnswered && (
+                                    <button 
+                                        onClick={() => setShowHint(true)}
+                                        disabled={showHint}
+                                        className={`px-5 py-3 rounded-xl font-bold transition-all flex items-center ${showHint ? 'bg-transparent text-slate-500 cursor-not-allowed opacity-50' : 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30'}`}
+                                    >
+                                        <i className="fas fa-magic mr-2"></i> Trợ giúp
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <div>
+                                {hasAnswered && (
+                                    <button 
+                                        onClick={nextQuestion}
+                                        className="btn-3d px-8 py-3 rounded-xl font-bold level-badge text-white shadow-[0_6px_0_0_var(--primary-dark)] text-lg flex items-center"
+                                    >
+                                        {currentIndex === questions.length - 1 ? 'Hoàn Thành Màn' : 'Câu Tiếp Theo'} <i className="fas fa-arrow-right ml-3"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
